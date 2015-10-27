@@ -44,6 +44,7 @@ function startBenchmark(aWindow) {
     } catch (e) {}
     startTime = aWindow.performance.now();
     webNav.reload(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY | Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE);
+    dump("Benchmark reloading: count=" + count + "/" + NUM_RUNS);
   }
 
   let finish = function() {
@@ -68,6 +69,9 @@ function startBenchmark(aWindow) {
       let duration = aWindow.performance.now() - startTime;
       durations.push(Math.round(duration));
       count++;
+      dump("Benchmark onLoad: count=" + count + "/" + NUM_RUNS + ", duration=" +
+           duration);
+
       if (count < NUM_RUNS) {
         aWindow.setTimeout(function() {
           reload();
