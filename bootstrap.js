@@ -50,34 +50,23 @@ function startBenchmark(aWindow) {
     running = false;
     browser.removeEventListener("load", onLoad, true);
 
-    let min = Number.MAX_VALUE;
-    let max = 0;
-    let sum = 0;
+    durations = durations.sort((a, b) => a > b);
+    let num = durations.length;
+    let sum = durations.reduce((res, next) => res + next);
+    let avg = Math.round(sum / num);
 
-    durations = durations.sort(function(a, b) {
-      return a > b;
-    });
+    let stdDev = Math.round(Math.sqrt(durations.reduce((res, next) => res + Math.pow(next - avg, 2)) / num));
 
-    durations.forEach(function(duration) {
-      if (duration < min) {
-        min = duration;
-      }
-      if (duration > max) {
-        max = duration;
-      }
-      sum += duration;
-    });
-
-    let avg = sum / durations.length;
-    dump("Benchmark complete: count=" + durations.length + ", min=" + min + ", max=" + max + ", mean=" + avg + ", median=" +
-         durations[NUM_RUNS / 2]);
+    dump("Benchmark complete: count=" + num +
+         ", min=" + durations[0] + ", max=" + durations[num - 1] +
+         ", mean=" + avg + ", median=" + durations[num / 2] +
+         ", std-dev=" + stdDev + " (" + Math.round(stdDev / avg * 100) + "%)");
   }
 
   let onLoad = function(evt) {
     if (evt.target == browser.contentDocument) {
       let duration = aWindow.performance.now() - startTime;
-      durations.push(duration);
-
+      durations.push(Math.round(duration));
       count++;
       if (count < NUM_RUNS) {
         aWindow.setTimeout(function() {
