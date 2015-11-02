@@ -15,6 +15,7 @@ function dump(msg) {
 }
 
 const NUM_RUNS = 100;
+const RELOAD_TIMEOUT = 60000;
 
 let running = false;
 
@@ -31,8 +32,11 @@ function startBenchmark(aWindow) {
   running = true;
   let browser = aWindow.BrowserApp.selectedBrowser;
   let count = 0;
+  let timeoutCount = 0;
+
 
   let startTime = 0;
+  let reloadTimeout = null;
   let durations = [];
 
   let reload = function() {
@@ -43,7 +47,16 @@ function startBenchmark(aWindow) {
         webNav = sh.QueryInterface(Ci.nsIWebNavigation);
     } catch (e) {}
     startTime = aWindow.performance.now();
-    webNav.reload(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY | Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE);
+
+    reloadTimeout = aWindow.setTimeout(function() {
+      dump("Benchmark timeout - reloading");
+      ++timeoutCount;
+      reload();
+    }, RELOAD_TIMEOUT);
+
+    webNav.reload(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY |
+                  Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE |
+                  Ci.nsIWebNavigation.LOAD_FLAGS_STOP_CONTENT);
     dump("Benchmark reloading: count=" + count + "/" + NUM_RUNS);
   }
 
@@ -61,7 +74,8 @@ function startBenchmark(aWindow) {
     dump("Benchmark complete: count=" + num +
          ", min=" + durations[0] + ", max=" + durations[num - 1] +
          ", mean=" + avg + ", median=" + durations[num / 2] +
-         ", std-dev=" + stdDev + " (" + Math.round(stdDev / avg * 100) + "%)");
+         ", std-dev=" + stdDev + " (" + Math.round(stdDev / avg * 100) + "%)" +
+         ", timeouts=" + timeoutCount);
   }
 
   let onLoad = function(evt) {
@@ -69,6 +83,9 @@ function startBenchmark(aWindow) {
       let duration = aWindow.performance.now() - startTime;
       durations.push(Math.round(duration));
       count++;
+
+      aWindow.clearTimeout(reloadTimeout);
+
       dump("Benchmark onLoad: count=" + count + "/" + NUM_RUNS + ", duration=" +
            duration);
 
