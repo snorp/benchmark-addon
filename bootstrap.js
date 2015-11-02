@@ -14,7 +14,7 @@ function dump(msg) {
   Log.d("Browser", msg);
 }
 
-const NUM_RUNS = 10;
+const NUM_RUNS = 100;
 
 let running = false;
 
