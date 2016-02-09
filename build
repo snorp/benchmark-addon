@@ -7,7 +7,13 @@ XPI=benchmark.xpi
 # Aurora = org.mozilla.fennec_aurora
 # Beta = org.mozilla.firefox_beta
 # Release = org.mozilla.firefox
-ANDROID_APP_ID=org.mozilla.fennec_esawin
+if [ -n "$NIGHTLY" ]; then
+    ANDROID_APP_ID=org.mozilla.fennec
+elif [ -n "$RELEASE" ]; then
+    ANDROID_APP_ID=org.mozilla.firefox
+else
+    ANDROID_APP_ID=org.mozilla.fennec_${USER}
+fi
 
 # List add-on files here
 zip -r $XPI bootstrap.js \
@@ -23,6 +29,6 @@ adb push "$XPI" /sdcard/"$XPI" && \
 adb push install.html /sdcard/install.html && \
 adb shell am start -a android.intent.action.VIEW \
                    -c android.intent.category.DEFAULT \
-                   -d file:///mnt/sdcard/install.html \
-                   -n $ANDROID_APP_ID/.App && \
+                   -d file:///sdcard/install.html \
+                   -n $ANDROID_APP_ID/org.mozilla.gecko.BrowserApp && \
 echo Pushed $XPI to $ANDROID_APP_ID
